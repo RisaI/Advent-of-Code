@@ -3,7 +3,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use anyhow::bail;
+use anyhow::Context;
 use clap::Parser;
 
 #[derive(Parser)]
@@ -19,51 +19,30 @@ fn main() -> anyhow::Result<()> {
     let mut valid = 0;
 
     for (idx, line) in reader.lines().enumerate() {
-        let line = line?;
-
-        let mut split = line.split(' ').map(|v| v.parse::<isize>());
-
-        let Some(Ok(mut prev)) = split.next() else {
-            bail!("invalid report at line {}", idx + 1);
-        };
+        let levels = line?
+            .split(' ')
+            .map(|v| v.parse::<isize>())
+            .collect::<Result<Vec<_>, _>>()
+            .with_context(|| format!("invalid report at line {}", idx + 1))?;
 
         let mut dir = 0;
         let mut dampener = !opts.disable_dampener;
 
-        let result: anyhow::Result<()> = split.try_for_each(|entry| {
-            let entry = entry?;
-            let dist = entry - prev;
-            prev = entry;
+        if levels
+            .windows(2)
+            .map(|vals| {
+                let dist = vals[1] - vals[0];
 
-            if dir == 0 {
-                dir = dist.signum();
-            }
-
-            let comparison = (|| {
-                if dist.signum() != dir {
-                    bail!("monotonicity is broken");
+                if dir == 0 {
+                    dir = dist.signum();
                 }
 
-                if dist.abs() > 3 {
-                    bail!("difference between levels is higher than 3");
-                } else if dist.abs() == 0 {
-                    bail!("difference between levels is zero");
-                }
+                let valid = dist.signum() == dir && dist.abs() <= 3 && dist.abs() > 0;
 
-                Ok(())
-            })();
-
-            if comparison.is_err() {
-                if !dampener {
-                    return comparison;
-                }
-
-                dampener = false
-            }
-            Ok(())
-        });
-
-        if result.is_ok() {
+                valid || std::mem::replace(&mut dampener, false)
+            })
+            .all(|v| v)
+        {
             valid += 1;
         }
     }
