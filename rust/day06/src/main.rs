@@ -10,13 +10,16 @@ enum Direction {
     Left = 3,
 }
 
+type Coord = usize;
+type Vec2 = (Coord, Coord);
+
 impl Direction {
-    fn move_by(self, (row, col): (isize, isize), by: isize) -> (isize, isize) {
+    fn move_pos(self, (row, col): Vec2) -> Option<Vec2> {
         match self {
-            Self::Up => (row - by, col),
-            Self::Right => (row, col + by),
-            Self::Down => (row + by, col),
-            Self::Left => (row, col - by),
+            Self::Up => row.checked_sub(1).map(|row| (row, col)),
+            Self::Right => col.checked_add(1).map(|col| (row, col)),
+            Self::Down => row.checked_add(1).map(|row| (row, col)),
+            Self::Left => col.checked_sub(1).map(|col| (row, col)),
         }
     }
 
@@ -37,22 +40,21 @@ fn main() -> anyhow::Result<()> {
 
     let cols = map
         .split('\n')
-        .map(|row| row.chars().count() as isize)
+        .map(|row| row.chars().count() as Coord)
         .next()
         .context("file is empty")?;
-    let rows = map.split('\n').filter(|r| !r.is_empty()).count() as isize;
+    let rows = map.split('\n').filter(|r| !r.is_empty()).count() as Coord;
 
     let original_pos = map
         .split('\n')
         .enumerate()
-        .filter_map(|row| row.1.find('^').map(|col| (row.0 as isize, col as isize)))
+        .filter_map(|row| row.1.find('^').map(|col| (row.0 as Coord, col as Coord)))
         .next()
         .context("guard not found")?;
 
     let has_barricade_at =
-        |(row, col): (isize, isize)| map.as_bytes()[(col + row * (cols + 1)) as usize] == b'#';
-    let is_out_of_bounds =
-        move |(row, col): (isize, isize)| row < 0 || col < 0 || row >= rows || col >= cols;
+        |(row, col): Vec2| map.as_bytes()[(col + row * (cols + 1)) as usize] == b'#';
+    let is_out_of_bounds = move |(row, col): Vec2| row >= rows || col >= cols;
 
     let mut trail = HashSet::default();
 
@@ -61,7 +63,9 @@ fn main() -> anyhow::Result<()> {
         let mut guard_pos = original_pos;
         let mut dir = Direction::Up;
         loop {
-            let next = dir.move_by(guard_pos, 1);
+            let Some(next) = dir.move_pos(guard_pos) else {
+                break;
+            };
 
             if is_out_of_bounds(next) {
                 break;
@@ -80,33 +84,38 @@ fn main() -> anyhow::Result<()> {
 
     // P2
     let now = std::time::Instant::now();
-    let max_steps = rows * cols - map.chars().filter(|c| *c == '#').count() as isize - 1;
 
     let loops = trail
         .into_par_iter()
         .filter(|&candidate| {
             let mut guard_pos = original_pos;
             let mut dir = Direction::Up;
-            let mut steps = 0;
+            let mut turning_points = HashSet::default();
+            let mut rotated = false;
 
             loop {
-                let next = dir.move_by(guard_pos, 1);
+                let Some(next) = dir.move_pos(guard_pos) else {
+                    break false;
+                };
 
                 if is_out_of_bounds(next) {
                     break false;
                 }
 
                 if next == candidate || has_barricade_at(next) {
-                    dir = dir.rotate_right()
+                    dir = dir.rotate_right();
+                    rotated = true;
                 } else {
-                    guard_pos = next;
+                    if rotated {
+                        rotated = false;
 
-                    if steps >= max_steps {
-                        break true;
+                        if !turning_points.insert(guard_pos) {
+                            break true;
+                        }
                     }
-                }
 
-                steps += 1;
+                    guard_pos = next;
+                }
             }
         })
         .count();
