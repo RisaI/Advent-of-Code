@@ -1,11 +1,5 @@
-use std::{
-    collections::HashSet,
-    fs::File,
-    io::{BufRead, BufReader},
-};
-
-use anyhow::bail;
-use fxhash::FxHashSet;
+use anyhow::Context;
+use fxhash::FxHashSet as HashSet;
 use rayon::prelude::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -37,56 +31,30 @@ impl Direction {
 }
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
-    let mut cols = 0isize;
-    let mut rows = 0isize;
+    let map = std::fs::read_to_string("data.txt")?;
 
-    let mut original_pos = Option::<(isize, isize)>::None;
-    let mut barricades = FxHashSet::default();
+    anyhow::ensure!(map.is_ascii(), "the map should be ASCII");
 
-    for (row_idx, line) in reader.lines().enumerate() {
-        let line = line?;
+    let cols = map
+        .split('\n')
+        .map(|row| row.chars().count() as isize)
+        .next()
+        .context("file is empty")?;
+    let rows = map.split('\n').filter(|r| !r.is_empty()).count() as isize;
 
-        if line.is_empty() {
-            break;
-        }
+    let original_pos = map
+        .split('\n')
+        .enumerate()
+        .filter_map(|row| row.1.find('^').map(|col| (row.0 as isize, col as isize)))
+        .next()
+        .context("guard not found")?;
 
-        let char_count = line.chars().count() as isize;
-
-        if cols == 0 {
-            cols = char_count;
-        }
-
-        if cols != char_count {
-            bail!("inconsistent line width");
-        }
-
-        rows = row_idx as isize + 1;
-
-        for (col_idx, ch) in line.chars().enumerate() {
-            match ch {
-                '#' => {
-                    barricades.insert((row_idx as isize, col_idx as isize));
-                }
-                '^' => {
-                    original_pos = Some((row_idx as isize, col_idx as isize));
-                }
-                _ => {
-                    // noop
-                }
-            }
-        }
-    }
-
-    let Some(original_pos) = original_pos else {
-        bail!("guard not found");
-    };
-
+    let has_barricade_at =
+        |(row, col): (isize, isize)| map.as_bytes()[(col + row * (cols + 1)) as usize] == b'#';
     let is_out_of_bounds =
         move |(row, col): (isize, isize)| row < 0 || col < 0 || row >= rows || col >= cols;
 
-    let mut trail = FxHashSet::default();
-    trail.insert(original_pos);
+    let mut trail = HashSet::default();
 
     // P1
     {
@@ -99,7 +67,7 @@ fn main() -> anyhow::Result<()> {
                 break;
             }
 
-            if barricades.contains(&next) {
+            if has_barricade_at(next) {
                 dir = dir.rotate_right()
             } else {
                 guard_pos = next;
@@ -107,20 +75,19 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        println!("visited {} fields", trail.len());
+        println!("visited {} fields", trail.len() + 1);
     }
 
     // P2
+    let now = std::time::Instant::now();
+    let max_steps = rows * cols - map.chars().filter(|c| *c == '#').count() as isize - 1;
+
     let loops = trail
         .into_par_iter()
         .filter(|&candidate| {
-            if candidate == original_pos {
-                return false;
-            }
-
-            let mut trail = HashSet::<((isize, isize), Direction)>::default();
             let mut guard_pos = original_pos;
             let mut dir = Direction::Up;
+            let mut steps = 0;
 
             loop {
                 let next = dir.move_by(guard_pos, 1);
@@ -129,20 +96,22 @@ fn main() -> anyhow::Result<()> {
                     break false;
                 }
 
-                if next == candidate || barricades.contains(&next) {
+                if next == candidate || has_barricade_at(next) {
                     dir = dir.rotate_right()
                 } else {
                     guard_pos = next;
 
-                    if !trail.insert((guard_pos, dir)) {
+                    if steps >= max_steps {
                         break true;
                     }
                 }
+
+                steps += 1;
             }
         })
         .count();
 
-    println!("{loops} looping additions");
+    println!("{loops} looping additions, {}ms", now.elapsed().as_millis());
 
     Ok(())
 }
