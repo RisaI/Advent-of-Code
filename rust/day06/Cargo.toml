@@ -1,0 +1,9 @@
+[package]
+name = "day06"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.94"
+fxhash = "0.2.1"
+rayon = "1.10.0"
