@@ -50,7 +50,7 @@ fn check_recursive(result: isize, values: &[isize], no_con: bool) -> bool {
         false => &Ops::ALL,
     };
 
-    for op in ops {
+    for op in ops.iter().rev() {
         let Some(next) = (match op {
             Ops::Sum if value < result => Some(result - value),
             Ops::Mul if result % value == 0 => Some(result / value),
