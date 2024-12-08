@@ -1,7 +1,12 @@
 [workspace]
 resolver = "2"
 members = [
-    "2015/day01", "2015/day02", "2015/day03", "2015/day04", "2015/day05", "2015/day06",
+    "2015/day01",
+    "2015/day02",
+    "2015/day03",
+    "2015/day04",
+    "2015/day05",
+    "2015/day06",
     "aoc_utils",
     "day01",
     "day02",
@@ -10,4 +15,5 @@ members = [
     "day05",
     "day06",
     "day07",
+    "day08",
 ]
