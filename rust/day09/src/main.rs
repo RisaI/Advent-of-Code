@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 type FileSystem = Vec<(Option<usize>, u8)>;
 
 fn parse_fs(text: &str) -> FileSystem {
@@ -17,50 +19,46 @@ fn parse_fs(text: &str) -> FileSystem {
 }
 
 fn compact(fs: &mut FileSystem) {
+    let mut gap_idx = 0;
     let mut file_idx = fs.len() - 1;
+
     loop {
-        let (Some(file_id), mut space) = fs[file_idx] else {
+        if file_idx <= gap_idx {
+            break;
+        }
+
+        let (Some(file_id), file_size) = fs[file_idx] else {
             file_idx -= 1;
             continue;
         };
 
-        let og_space = space;
+        let (None, gap_size) = fs[gap_idx] else {
+            gap_idx += 1;
+            continue;
+        };
 
-        while space > 0 {
-            let Some((free_idx, free_block)) = fs
-                .iter_mut()
-                .take(file_idx)
-                .enumerate()
-                .find(|(_, v)| v.0.is_none())
-            else {
-                break;
-            };
+        fs[gap_idx].0 = Some(file_id);
 
-            if free_block.1 <= space {
-                free_block.0 = Some(file_id);
-                space -= free_block.1;
-            } else {
-                let remaining = free_block.1 - space;
-
-                *free_block = (Some(file_id), space);
-                fs.insert(free_idx + 1, (None, remaining));
-                file_idx += 1;
-                space = 0;
+        match gap_size.cmp(&file_size) {
+            Ordering::Equal => {
+                fs[file_idx].0 = None;
             }
-        }
+            Ordering::Less => {
+                fs[file_idx].1 -= gap_size;
 
-        if space > 0 {
-            fs[file_idx].1 = space;
-            fs.insert(file_idx + 1, (None, og_space - space));
-            break;
-        } else {
-            fs[file_idx] = (None, og_space);
-        }
+                if let Some((None, next_gap)) = fs.get_mut(file_idx + 1) {
+                    *next_gap += gap_size;
+                } else {
+                    fs.insert(file_idx + 1, (None, gap_size));
+                }
+            }
+            Ordering::Greater => {
+                fs[file_idx].0 = None;
+                fs[gap_idx].1 = file_size;
+                fs.insert(gap_idx + 1, (None, gap_size - file_size));
 
-        if file_idx == 0 {
-            break;
-        } else {
-            file_idx -= 1;
+                gap_idx += 1;
+            }
         }
     }
 }
@@ -117,19 +115,25 @@ fn compact_non_fragmented(fs: &mut FileSystem) {
         } else {
             fs.swap(gap_idx, file_idx);
         }
+
+        while let Some((None, _)) = fs.last() {
+            fs.pop();
+        }
     }
 }
 
 fn checksum(fs: &FileSystem) -> usize {
     fs.iter()
-        .fold((0, 0), |(block_idx, mut sum), (file_id, file_size)| {
-            if let Some(file_id) = *file_id {
-                for i in 0..(*file_size) {
-                    sum += (block_idx + i as usize) * file_id;
+        .fold((0, 0), |(block_idx, mut sum), &(file_id, file_size)| {
+            let file_size = file_size as usize;
+
+            if let Some(file_id) = file_id {
+                for i in 0..file_size {
+                    sum += (block_idx + i) * file_id;
                 }
             };
 
-            (block_idx + *file_size as usize, sum)
+            (block_idx + file_size, sum)
         })
         .1
 }
@@ -139,20 +143,28 @@ fn checksum_just_werks() {
     let mut fs = parse_fs("2333133121414131402");
 
     compact(&mut fs);
+    println!("{fs:?}");
 
     assert_eq!(checksum(&fs), 1928);
 
     let mut fs = parse_fs("2333133121414131402");
 
-    println!("{fs:?}");
     compact_non_fragmented(&mut fs);
-    println!("{fs:?}");
 
-    assert_eq!(checksum(&fs), 2858)
+    assert_eq!(checksum(&fs), 2858);
+
+    let data = std::fs::read_to_string("data.txt").unwrap();
+    let mut fs = parse_fs(&data);
+
+    compact(&mut fs);
+
+    assert_eq!(checksum(&fs), 6225730762521)
 }
 
 fn main() -> anyhow::Result<()> {
     let data = std::fs::read_to_string("data.txt")?;
+
+    let start = std::time::Instant::now();
 
     let mut fs = parse_fs(&data);
 
@@ -165,6 +177,8 @@ fn main() -> anyhow::Result<()> {
     compact_non_fragmented(&mut fs);
 
     println!("non-fragmented checksum: {}", checksum(&fs));
+
+    println!("took {}ms", start.elapsed().as_millis());
 
     Ok(())
 }
