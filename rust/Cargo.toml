@@ -6,7 +6,8 @@ members = [
     "2015/day03",
     "2015/day04",
     "2015/day05",
-    "2015/day06", "2015/day07",
+    "2015/day06",
+    "2015/day07",
     "aoc_utils",
     "day01",
     "day02",
@@ -15,5 +16,6 @@ members = [
     "day05",
     "day06",
     "day07",
-    "day08", "day09",
+    "day08",
+    "day09",
 ]
