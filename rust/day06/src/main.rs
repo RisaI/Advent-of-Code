@@ -1,6 +1,6 @@
 use anyhow::Context;
-use fxhash::FxHashSet as HashSet;
 use rayon::prelude::*;
+use rustc_hash::FxHashSet as HashSet;
 
 type Coord = i32;
 type Vec2 = glam::IVec2;

@@ -1,5 +1,5 @@
 use anyhow::bail;
-use fxhash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 type Prec = i32;
 type Vec2 = glam::IVec2;

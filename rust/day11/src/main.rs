@@ -1,4 +1,4 @@
-use fxhash::FxHashMap as HashMap;
+use rustc_hash::FxHashMap as HashMap;
 
 fn split_even_digits(number: usize) -> Option<(usize, usize)> {
     match number.ilog10() + 1 {
