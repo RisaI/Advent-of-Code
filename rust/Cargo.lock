@@ -225,6 +225,7 @@ name = "aoc24-day10"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "aoc_utils",
 ]
 
 [[package]]
@@ -236,8 +237,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc24-day12"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc_utils",
+ "glam",
+ "rustc-hash",
+]
+
+[[package]]
 name = "aoc_utils"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "glam",
+]
 
 [[package]]
 name = "block-buffer"

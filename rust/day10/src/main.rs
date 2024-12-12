@@ -1,136 +1,80 @@
-use std::{
-    collections::HashSet,
-    fs::File,
-    io::{BufRead, BufReader},
-    path::Path,
-};
+use std::collections::HashSet;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
+use aoc_utils::{IVec2 as Vec2, Map2D};
 
-struct Map {
-    width: usize,
-    height_map: Box<[u8]>,
+type Map = Map2D<u8>;
+
+pub fn find_trailheads(_: Vec2, v: &u8) -> bool {
+    *v == 0
 }
 
-impl Map {
-    pub fn parse_file(path: impl AsRef<Path>) -> Result<Self> {
-        let mut height_map = vec![];
+pub fn find_trail_score(map: &Map, pos: Vec2, unique_peaks: bool) -> usize {
+    let mut tops = 0;
+    let mut visited = HashSet::<Vec2>::default();
 
-        let reader = BufReader::new(File::open(path)?);
-        let mut width = 0;
+    fn inner(
+        pos: Vec2,
+        unique_peaks: bool,
+        expected_height: u8,
+        map: &Map,
+        tops: &mut usize,
+        visited: &mut HashSet<Vec2>,
+    ) {
+        let Some(&height) = map.get(pos) else {
+            return;
+        };
 
-        for line in reader.lines() {
-            let line = line?;
-
-            if line.is_empty() {
-                continue;
-            }
-
-            if width == 0 {
-                width = line.len();
-            }
-
-            if line.len() != width {
-                bail!("inconsistent line width");
-            }
-
-            height_map.extend(line.as_bytes().iter().copied().map(|h| h - b'0'));
+        if height != expected_height {
+            return;
         }
 
-        debug_assert_eq!(height_map.len() % width, 0);
-
-        Ok(Self {
-            width,
-            height_map: height_map.into_boxed_slice(),
-        })
-    }
-
-    pub fn width(&self) -> usize {
-        self.width
-    }
-
-    pub fn height(&self) -> usize {
-        self.height_map.len() / self.width()
-    }
-
-    pub fn get_height(&self, x: isize, y: isize) -> Option<u8> {
-        let x: usize = x.try_into().ok()?;
-        let y: usize = y.try_into().ok()?;
-
-        if x >= self.width() || y >= self.height() {
-            return None;
+        if unique_peaks && !visited.insert(pos) {
+            return;
         }
 
-        self.height_map.get(x + y * self.width()).copied()
-    }
-
-    pub fn find_trailheads(&self) -> impl Iterator<Item = (isize, isize)> + '_ {
-        self.height_map.iter().enumerate().filter_map(|(idx, h)| {
-            if *h == 0 {
-                Some(((idx % self.width()) as isize, (idx / self.width()) as isize))
-            } else {
-                None
-            }
-        })
-    }
-
-    pub fn find_trail_score(&self, x: isize, y: isize, unique_peaks: bool) -> usize {
-        let mut tops = 0;
-        let mut visited = HashSet::<(isize, isize)>::default();
-
-        fn inner(
-            x: isize,
-            y: isize,
-            unique_peaks: bool,
-            expected_height: u8,
-            map: &Map,
-            tops: &mut usize,
-            visited: &mut HashSet<(isize, isize)>,
-        ) {
-            let Some(height) = map.get_height(x, y) else {
-                return;
-            };
-
-            if height != expected_height {
-                return;
-            }
-
-            if unique_peaks && !visited.insert((x, y)) {
-                return;
-            }
-
-            if height >= 9 {
-                *tops += 1;
-                return;
-            }
-
-            inner(x + 1, y, unique_peaks, height + 1, map, tops, visited);
-            inner(x, y + 1, unique_peaks, height + 1, map, tops, visited);
-            inner(x - 1, y, unique_peaks, height + 1, map, tops, visited);
-            inner(x, y - 1, unique_peaks, height + 1, map, tops, visited);
+        if height >= 9 {
+            *tops += 1;
+            return;
         }
 
-        inner(x, y, unique_peaks, 0, self, &mut tops, &mut visited);
-
-        tops
+        [
+            Vec2::new(1, 0),
+            Vec2::new(0, 1),
+            Vec2::new(-1, 0),
+            Vec2::new(0, -1),
+        ]
+        .into_iter()
+        .for_each(|d| inner(pos + d, unique_peaks, height + 1, map, tops, visited));
     }
+
+    inner(pos, unique_peaks, 0, map, &mut tops, &mut visited);
+
+    tops
+}
+
+fn parse_char(c: char) -> u8 {
+    c as u8 - b'0'
 }
 
 #[test]
 fn example_werks() {
-    let map = Map {
-        width: 8,
-        height_map: vec![
-            8, 9, 0, 1, 0, 1, 2, 3, 7, 8, 1, 2, 1, 8, 7, 4, 8, 7, 4, 3, 0, 9, 6, 5, 9, 6, 5, 4, 9,
-            8, 7, 4, 4, 5, 6, 7, 8, 9, 0, 3, 3, 2, 0, 1, 9, 0, 1, 2, 0, 1, 3, 2, 9, 8, 0, 1, 1, 0,
-            4, 5, 6, 7, 3, 2,
-        ]
-        .into_boxed_slice(),
-    };
+    let map = Map::read_str(
+        "89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732",
+        parse_char,
+    )
+    .unwrap();
 
     let score = map
-        .find_trailheads()
-        .map(|(x, y)| map.find_trail_score(x, y, true))
+        .find(find_trailheads)
+        .map(|(p, _)| find_trail_score(&map, p, true))
         .sum::<usize>();
 
     assert_eq!(score, 36);
@@ -138,18 +82,18 @@ fn example_werks() {
 
 #[test]
 fn finds_correct_peaks() {
-    let data = Map::parse_file("data.txt").unwrap();
+    let data = Map::read_file("data.txt", parse_char).unwrap();
 
-    assert_eq!(data.find_trail_score(46, 32, true), 3);
+    assert_eq!(find_trail_score(&data, Vec2::new(46, 32), true), 3);
 }
 
 fn main() -> Result<()> {
-    let map = Map::parse_file("data.txt")?;
+    let map = Map::read_file("data.txt", parse_char)?;
 
-    let (p1, p2) = map.find_trailheads().fold((0, 0), |(p1, p2), (x, y)| {
+    let (p1, p2) = map.find(find_trailheads).fold((0, 0), |(p1, p2), (p, _)| {
         (
-            p1 + map.find_trail_score(x, y, true),
-            p2 + map.find_trail_score(x, y, false),
+            p1 + find_trail_score(&map, p, true),
+            p2 + find_trail_score(&map, p, false),
         )
     });
 
