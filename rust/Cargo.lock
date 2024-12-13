@@ -147,6 +147,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc15-day13"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "itertools",
+ "winnow",
+]
+
+[[package]]
 name = "aoc24-day01"
 version = "0.1.0"
 dependencies = [
