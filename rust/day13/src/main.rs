@@ -55,6 +55,21 @@ fn block_parser<'a>() -> impl Parser<&'a str, (IVec2, IVec2, IVec2), InputError<
         .map(|((_, a), _, (_, b), _, (_, px, _, py))| (a, b, (px, py)))
 }
 
+#[test]
+fn parser_works() {
+    let (a, b, prize) = block_parser()
+        .parse(
+            "Button A: X+94, Y+34
+Button B: X+22, Y+67
+Prize: X=8400, Y=5400",
+        )
+        .unwrap();
+
+    assert_eq!(a, (94, 34));
+    assert_eq!(b, (22, 67));
+    assert_eq!(prize, (8400, 5400));
+}
+
 fn main() -> anyhow::Result<()> {
     let data = std::fs::read_to_string("data.txt")?;
 
