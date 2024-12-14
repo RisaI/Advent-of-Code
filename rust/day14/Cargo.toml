@@ -1,0 +1,9 @@
+[package]
+name = "aoc24-day14"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.94"
+glam = "0.29.2"
+winnow = "0.6.20"
