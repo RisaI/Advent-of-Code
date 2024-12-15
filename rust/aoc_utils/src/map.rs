@@ -32,7 +32,7 @@ impl<T> Map2D<T> {
             let line = line?;
 
             if line.is_empty() {
-                continue;
+                break;
             }
 
             if width == 0 {
