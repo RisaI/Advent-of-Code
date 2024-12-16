@@ -13,22 +13,44 @@ pub struct Map2D<T> {
     data: Box<[T]>,
 }
 
+pub trait MapConstructParam {
+    fn from(ch: char, x: usize, y: usize) -> Self;
+}
+
+impl MapConstructParam for char {
+    fn from(ch: char, _: usize, _: usize) -> Self {
+        ch
+    }
+}
+
+impl MapConstructParam for (char, IVec2) {
+    fn from(ch: char, x: usize, y: usize) -> Self {
+        (ch, IVec2::new(x as i32, y as i32))
+    }
+}
+
 impl<T> Map2D<T> {
-    pub fn read_file(path: impl AsRef<Path>, f: impl FnMut(char) -> T) -> Result<Self> {
+    pub fn read_file<P>(path: impl AsRef<Path>, f: impl FnMut(P) -> T) -> Result<Self>
+    where
+        P: MapConstructParam,
+    {
         Self::read(File::open(path)?, f)
     }
 
-    pub fn read_str(data: &str, f: impl FnMut(char) -> T) -> Result<Self> {
+    pub fn read_str<P: MapConstructParam>(data: &str, f: impl FnMut(P) -> T) -> Result<Self> {
         Self::read(Cursor::new(data), f)
     }
 
-    pub fn read(reader: impl Read, mut f: impl FnMut(char) -> T) -> Result<Self> {
+    pub fn read<P: MapConstructParam>(
+        reader: impl Read,
+        mut f: impl FnMut(P) -> T,
+    ) -> Result<Self> {
         let mut data = vec![];
 
         let reader = BufReader::new(reader);
         let mut width = 0;
 
-        for line in reader.lines() {
+        for (y, line) in reader.lines().enumerate() {
             let line = line?;
 
             if line.is_empty() {
@@ -43,7 +65,7 @@ impl<T> Map2D<T> {
                 bail!("inconsistent line width");
             }
 
-            data.extend(line.chars().map(&mut f));
+            data.extend(line.chars().enumerate().map(|(x, ch)| f(P::from(ch, x, y))));
         }
 
         anyhow::ensure!(

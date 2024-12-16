@@ -92,7 +92,7 @@ fn print_map(map: &Map2D<bool>, crates: &[Crate], player: IVec2) {
 }
 
 fn main() -> anyhow::Result<()> {
-    let map = Map2D::read_file("data.txt", |c| c == '#')?;
+    let map = Map2D::read_file("data.txt", |c: char| c == '#')?;
     let mut crates = vec![];
     let mut player = IVec2::new(0, 0);
 

@@ -107,7 +107,7 @@ fn example_just_werks() {
 BBCD
 BBCC
 EEEC",
-        |c| c as u8 - b'A',
+        |c: char| c as u8 - b'A',
     )
     .unwrap();
 
@@ -115,7 +115,7 @@ EEEC",
 }
 
 fn main() -> anyhow::Result<()> {
-    let map = Map::read_file("data.txt", |c| c as u8 - b'A')?;
+    let map = Map::read_file("data.txt", |c: char| c as u8 - b'A')?;
 
     let start = std::time::Instant::now();
     let (nondiscounted, discounted) = calculate_fence_price(&map);
