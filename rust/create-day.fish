@@ -11,5 +11,3 @@ end
 
 echo https://adventofcode.com/2024/day/$day_idx
 echo https://adventofcode.com/2024/day/$day_idx/input
-
-cd $day_name
