@@ -1,3 +1,11 @@
+use anyhow::Context;
+use winnow::{
+    ascii::{alpha1, digit1, line_ending},
+    combinator::{preceded, separated_pair},
+    error::InputError,
+    Parser,
+};
+
 enum OperationOutput {
     Out(u8),
     Jump(usize),
@@ -9,6 +17,34 @@ struct Puter {
 }
 
 impl Puter {
+    pub fn new_a(a: usize) -> Self {
+        Self {
+            registers: [a, 0, 0],
+        }
+    }
+
+    pub fn parse(input: &str) -> anyhow::Result<Self> {
+        let registers: Vec<_> = winnow::combinator::separated(
+            3..=3,
+            separated_pair(
+                preceded("Register ", alpha1::<_, InputError<_>>),
+                ": ",
+                digit1.parse_to::<usize>(),
+            ),
+            line_ending,
+        )
+        .parse(input)
+        .map_err(|e| anyhow::format_err!("{e}"))?;
+
+        if !(('A'..='C').eq(registers.iter().filter_map(|(v, _)| v.chars().next()))) {
+            anyhow::bail!("register names are off");
+        }
+
+        Ok(Self {
+            registers: std::array::from_fn(|i| registers[i].1),
+        })
+    }
+
     pub fn resolve_operand(&self, val: u8, combo: bool) -> usize {
         if val > 7 {
             panic!("invalid operand");
@@ -65,7 +101,6 @@ impl Puter {
             7 => {
                 // cdv
                 self.registers[2] = self.registers[0] >> self.resolve_operand(operand, true);
-                println!("{}", self.registers[2]);
             }
             _ => unreachable!(),
         }
@@ -73,7 +108,7 @@ impl Puter {
         OperationOutput::None
     }
 
-    pub fn eval(&mut self, program: &[u8], expected_output: Option<&[u8]>) -> Vec<u8> {
+    pub fn eval(&mut self, program: &[u8], expected_output: Option<&[u8]>) -> Option<Vec<u8>> {
         let mut cursor = 0;
         let mut output = vec![];
 
@@ -85,7 +120,7 @@ impl Puter {
                         if output.len() == expected_output.len()
                             || expected_output[output.len()] != p
                         {
-                            break;
+                            return None;
                         }
                     }
 
@@ -100,55 +135,89 @@ impl Puter {
             cursor += 2;
         }
 
-        output
+        Some(output)
     }
+}
+
+fn find_initial_register(program: &[u8]) -> Option<usize> {
+    // This algorithm uses external knowledge:
+    // * the program is advanced by right-shifting A by 3 bits
+    // * other registers are dependent solely on A
+
+    fn inner(program: &[u8], candidate: usize, idx: usize) -> Option<usize> {
+        for i in 0..8 {
+            let test = (candidate << 3) | i;
+
+            let mut puter = Puter::new_a(test);
+
+            if puter.eval(program, Some(&program[idx..])).is_some() {
+                if idx == 0 {
+                    return Some(test);
+                }
+
+                if let Some(val) = inner(program, test, idx - 1) {
+                    return Some(val);
+                }
+            }
+        }
+
+        None
+    }
+
+    inner(program, 0, program.len() - 1)
 }
 
 #[test]
 fn example_werks() {
-    let mut puter = Puter {
-        registers: [729, 0, 0],
-    };
+    let mut puter = Puter::new_a(729);
 
     assert_eq!(
-        puter.eval(&[0, 1, 5, 4, 3, 0], None),
+        puter.eval(&[0, 1, 5, 4, 3, 0], None).unwrap(),
         vec![4, 6, 3, 5, 6, 3, 5, 2, 1, 0],
     )
 }
 
-fn main() {
-    let mut puter = Puter {
-        registers: [37293246, 0, 0],
-    };
-    let program: Vec<u8> = vec![2, 4, 1, 6, 7, 5, 4, 4, 1, 7, 0, 3, 5, 5, 3, 0];
-    let output = puter.eval(&program, None);
+fn solution_to_string(solution: &[u8]) -> String {
+    solution
+        .iter()
+        .enumerate()
+        .fold(String::new(), |mut s, (i, v)| {
+            if i > 0 {
+                s.push(',');
+            }
 
-    println!(
-        "{}",
-        output
-            .into_iter()
-            .enumerate()
-            .fold(String::new(), |mut s, (i, v)| {
-                if i > 0 {
-                    s.push(',');
-                }
+            s.push_str(&v.to_string());
 
-                s.push_str(&v.to_string());
+            s
+        })
+}
 
-                s
-            })
-    );
+fn main() -> anyhow::Result<()> {
+    let data = std::fs::read_to_string("data.txt")?;
+    let (puter, program) = data
+        .split_once("\n\n")
+        .context("input is in a wrong format")?;
+    let (_, program) = program
+        .split_once(' ')
+        .context("program is in a wrong format")?;
 
-    let bound = 8usize.pow(program.len() as u32 - 1);
+    let mut puter = Puter::parse(puter)?;
+    let program = program
+        .trim()
+        .split(',')
+        .map(|v| v.parse::<u8>())
+        .collect::<Result<Vec<_>, _>>()?;
 
-    for i in bound.. {
-        let mut puter = Puter {
-            registers: [i, 0, 0],
-        };
+    // P1
+    {
+        let output = puter.eval(&program, None).unwrap();
 
-        if puter.eval(&program, Some(&program)) == program {
-            println!("Program replicated for A = {i}");
-            break;
-        }
+        println!("{}", solution_to_string(&output));
     }
+
+    // P2
+    let result = find_initial_register(&program).context("solution for p2 not found")?;
+    println!("A value to replicate program: {result}");
+
+    Ok(())
 }
