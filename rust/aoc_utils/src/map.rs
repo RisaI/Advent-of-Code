@@ -8,6 +8,7 @@ use std::{
 use anyhow::{bail, Result};
 use glam::IVec2;
 
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Map2D<T> {
     width: usize,
     data: Box<[T]>,
