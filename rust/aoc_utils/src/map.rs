@@ -1,4 +1,5 @@
 use std::{
+    fmt::Write,
     fs::File,
     io::{BufRead, BufReader, Cursor, Read},
     ops::Index,
@@ -7,6 +8,7 @@ use std::{
 
 use anyhow::{bail, Result};
 use glam::IVec2;
+use rustc_hash::FxHashMap;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Map2D<T> {
@@ -134,6 +136,86 @@ impl<T> Map2D<T> {
                 None
             }
         })
+    }
+}
+
+impl Map2D<bool> {
+    pub fn a_star(&self, from: IVec2, to: IVec2) -> Option<usize> {
+        let mut queue = vec![];
+        let mut known = FxHashMap::<IVec2, (usize, usize)>::default();
+        queue.push(from);
+        known.insert(from, (0, 0));
+
+        while !queue.is_empty() {
+            queue.sort_by(|a, b| {
+                known
+                    .get(a)
+                    .unwrap()
+                    .1
+                    .cmp(&known.get(b).unwrap().1)
+                    .reverse()
+            });
+
+            let pos = queue.pop()?;
+            let steps = known.get(&pos).unwrap().0;
+
+            // println!("{pos}");
+
+            if pos == to {
+                return Some(steps);
+            }
+
+            for d in [
+                IVec2::new(1, 0),
+                IVec2::new(0, 1),
+                IVec2::new(-1, 0),
+                IVec2::new(0, -1),
+            ] {
+                let next = pos + d;
+
+                if !matches!(self.get(next), Some(false)) {
+                    continue;
+                }
+
+                match known.get(&next) {
+                    None => (),
+                    Some((prev_steps, _)) if *prev_steps > steps + 1 => (),
+                    _ => continue,
+                }
+
+                queue.push(next);
+                known.insert(
+                    next,
+                    (
+                        steps + 1,
+                        steps + 1 + ((to - next).length_squared() as f64).sqrt() as usize,
+                    ),
+                );
+            }
+        }
+        None
+    }
+}
+
+impl std::fmt::Display for Map2D<bool> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for y in 0..self.height() {
+            if y > 0 {
+                f.write_char('\n')?;
+            }
+
+            for x in 0..self.width() {
+                f.write_char(
+                    if let Some(true) = self.get(IVec2::new(x as i32, y as i32)) {
+                        '#'
+                    } else {
+                        '.'
+                    },
+                )?;
+            }
+        }
+
+        Ok(())
     }
 }
 

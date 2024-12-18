@@ -49,5 +49,20 @@
 			"\t$0",
 			"}"
 		]
+	},
+	"Read data by folding": {
+		"scope": "rust",
+		"prefix": "read_by_folding",
+		"body": [
+			"let data = BufReader::new(File::open(\"data.txt\")?)",
+			"\t.lines()",
+			"\t.try_fold($1, |mut state, line| -> anyhow::Result<_> {",
+			"\t\tlet line = line?;",
+			"",
+			"\t\t$0",
+			"",
+			"\t\tOk(state)",
+			"\t})?;",
+		]
 	}
 }

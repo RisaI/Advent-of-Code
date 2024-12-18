@@ -344,11 +344,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc24-day18"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc_utils",
+]
+
+[[package]]
 name = "aoc_utils"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "glam",
+ "rustc-hash",
 ]
 
 [[package]]
