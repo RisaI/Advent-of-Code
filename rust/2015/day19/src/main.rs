@@ -40,7 +40,7 @@ fn main() -> anyhow::Result<()> {
     let mut reader = BufReader::new(File::open("data.txt")?).lines();
 
     let mut atoms = HashMap::<String, u8>::default();
-    let mut replacements = HashMap::<Vec<u8>, Vec<Vec<u8>>>::default();
+    let mut replacements = Vec::<(Vec<u8>, Vec<u8>)>::default();
 
     for line in reader.by_ref() {
         let line = line?;
@@ -53,24 +53,20 @@ fn main() -> anyhow::Result<()> {
             .split_once(" => ")
             .context("unknown replacement format")?;
 
-        replacements
-            .entry(
-                parse_molecule(from)
-                    .map(|atom| {
-                        let next = atoms.len() as u8;
-                        *atoms.entry(atom.to_string()).or_insert(next)
-                    })
-                    .collect(),
-            )
-            .or_default()
-            .push(
-                parse_molecule(to)
-                    .map(|atom| {
-                        let next = atoms.len() as u8;
-                        *atoms.entry(atom.to_string()).or_insert(next)
-                    })
-                    .collect(),
-            );
+        replacements.push((
+            parse_molecule(from)
+                .map(|atom| {
+                    let next = atoms.len() as u8;
+                    *atoms.entry(atom.to_string()).or_insert(next)
+                })
+                .collect(),
+            parse_molecule(to)
+                .map(|atom| {
+                    let next = atoms.len() as u8;
+                    *atoms.entry(atom.to_string()).or_insert(next)
+                })
+                .collect(),
+        ));
     }
 
     let molecule = parse_molecule(&reader.next().context("unexpected end of input")??)
@@ -87,17 +83,15 @@ fn main() -> anyhow::Result<()> {
         for (idx, _) in molecule.iter().enumerate() {
             for (sub, by) in &replacements {
                 if &molecule[idx..(idx + sub.len())] == sub {
-                    for by in by {
-                        options.insert(
-                            molecule
-                                .iter()
-                                .take(idx)
-                                .chain(by.iter())
-                                .chain(molecule.iter().skip(idx + sub.len()))
-                                .copied()
-                                .collect::<Vec<_>>(),
-                        );
-                    }
+                    options.insert(
+                        molecule
+                            .iter()
+                            .take(idx)
+                            .chain(by.iter())
+                            .chain(molecule.iter().skip(idx + sub.len()))
+                            .copied()
+                            .collect::<Vec<_>>(),
+                    );
                 }
             }
         }
@@ -107,25 +101,11 @@ fn main() -> anyhow::Result<()> {
 
     // P2
     {
-        let mut reverse = replacements
-            .iter()
-            .filter(|(k, _)| *k != &vec![*atoms.get("e").unwrap()])
-            .flat_map(|(k, v)| v.iter().cloned().map(|v| (v, k.clone())))
-            .fold(HashMap::<_, Vec<_>>::default(), |mut prev, (k, v)| {
-                prev.entry(k).or_default().push(v);
-
-                prev
-            })
-            .into_iter()
-            .collect::<Vec<_>>();
-
-        reverse.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
-
-        println!("{reverse:?}");
-        return Ok(());
+        replacements.sort_by_key(|(_, v)| v.len());
+        replacements.reverse();
 
         fn inner(
-            replacements: &[(Vec<u8>, Vec<Vec<u8>>)],
+            replacements: &[(Vec<u8>, Vec<u8>)],
             targets: &[Vec<u8>],
             current: &[u8],
             depth: usize,
@@ -141,32 +121,35 @@ fn main() -> anyhow::Result<()> {
                 return;
             }
 
-            for (sub, by) in replacements {
+            for (by, sub) in replacements {
                 if sub.len() > current.len() {
                     continue;
                 }
 
                 for i in 0..(current.len() - sub.len() + 1) {
                     if &current[i..(i + sub.len())] == sub {
-                        for by in by {
-                            let next = current
-                                .iter()
-                                .take(i)
-                                .chain(by.iter())
-                                .chain(current.iter().skip(i + sub.len()))
-                                .copied()
-                                .collect::<Vec<_>>();
+                        let next = current
+                            .iter()
+                            .take(i)
+                            .chain(by.iter())
+                            .chain(current.iter().skip(i + sub.len()))
+                            .copied()
+                            .collect::<Vec<_>>();
 
-                            inner(replacements, targets, &next, depth + 1, cap);
-                        }
+                        inner(replacements, targets, &next, depth + 1, cap);
                     }
                 }
             }
         }
 
-        let targets = replacements.get(&vec![*atoms.get("e").unwrap()]).unwrap();
+        let targets = replacements
+            .iter()
+            .filter(|(k, _)| k == &vec![*atoms.get("e").unwrap()])
+            .map(|(_, v)| v.clone())
+            .collect::<Vec<_>>();
+
         let mut cap = 300;
-        inner(&reverse, targets, &molecule, 0, &mut cap);
+        inner(&replacements, &targets, &molecule, 0, &mut cap);
         println!("{}", cap)
     }
 
