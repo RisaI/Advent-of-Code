@@ -10,6 +10,13 @@ use anyhow::{bail, Result};
 use glam::IVec2;
 use rustc_hash::FxHashMap;
 
+static MOVEMENT_DIRECTIONS: &[IVec2] = &[
+    IVec2::new(1, 0),
+    IVec2::new(0, 1),
+    IVec2::new(-1, 0),
+    IVec2::new(0, -1),
+];
+
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Map2D<T> {
     width: usize,
@@ -139,38 +146,84 @@ impl<T> Map2D<T> {
     }
 }
 
+pub struct AStarOptions<'a> {
+    pub from: IVec2,
+    pub to: IVec2,
+    pub directions: &'a [IVec2],
+    pub max_steps: Option<usize>,
+}
+
+impl AStarOptions<'_> {
+    pub fn new(from: IVec2, to: IVec2) -> Self {
+        Self {
+            from,
+            to,
+            directions: MOVEMENT_DIRECTIONS,
+            max_steps: None,
+        }
+    }
+}
+
 impl Map2D<bool> {
-    pub fn a_star(&self, from: IVec2, to: IVec2) -> Option<usize> {
+    pub fn a_star(
+        &'_ self,
+        AStarOptions {
+            from,
+            to,
+            directions,
+            max_steps,
+        }: AStarOptions<'_>,
+    ) -> Option<Vec<IVec2>> {
+        #[derive(Default)]
+        struct PointInfo {
+            pub steps: usize,
+            pub cost_estimate: usize,
+            pub prev_tile: Option<IVec2>,
+        }
+
         let mut queue = vec![];
-        let mut known = FxHashMap::<IVec2, (usize, usize)>::default();
+        let mut known = FxHashMap::<IVec2, PointInfo>::default();
         queue.push(from);
-        known.insert(from, (0, 0));
+        known.insert(from, PointInfo::default());
 
         while !queue.is_empty() {
             queue.sort_by(|a, b| {
                 known
                     .get(a)
                     .unwrap()
-                    .1
-                    .cmp(&known.get(b).unwrap().1)
+                    .cost_estimate
+                    .cmp(&known.get(b).unwrap().cost_estimate)
                     .reverse()
             });
 
             let pos = queue.pop()?;
-            let steps = known.get(&pos).unwrap().0;
+            let steps = known.get(&pos).unwrap().steps;
+
+            if let Some(true) = max_steps.map(|v| v < steps) {
+                continue;
+            }
 
             // println!("{pos}");
 
             if pos == to {
-                return Some(steps);
+                let mut cursor = pos;
+                return Some(
+                    std::iter::once(pos)
+                        .chain(std::iter::from_fn::<IVec2, _>(|| {
+                            match known.get(&cursor) {
+                                Some(p) => {
+                                    cursor = p.prev_tile.unwrap_or(cursor);
+
+                                    p.prev_tile
+                                }
+                                None => None,
+                            }
+                        }))
+                        .collect(),
+                );
             }
 
-            for d in [
-                IVec2::new(1, 0),
-                IVec2::new(0, 1),
-                IVec2::new(-1, 0),
-                IVec2::new(0, -1),
-            ] {
+            for d in directions {
                 let next = pos + d;
 
                 if !matches!(self.get(next), Some(false)) {
@@ -179,17 +232,22 @@ impl Map2D<bool> {
 
                 match known.get(&next) {
                     None => (),
-                    Some((prev_steps, _)) if *prev_steps > steps + 1 => (),
+                    Some(PointInfo {
+                        steps: prev_steps, ..
+                    }) if *prev_steps > steps + 1 => (),
                     _ => continue,
                 }
 
                 queue.push(next);
                 known.insert(
                     next,
-                    (
-                        steps + 1,
-                        steps + 1 + ((to - next).length_squared() as f64).sqrt() as usize,
-                    ),
+                    PointInfo {
+                        steps: steps + 1,
+                        cost_estimate: steps
+                            + 1
+                            + ((to.x - next.x).abs() + (to.y - next.y).abs()) as usize,
+                        prev_tile: Some(pos),
+                    },
                 );
             }
         }

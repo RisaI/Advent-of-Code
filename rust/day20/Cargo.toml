@@ -1,0 +1,9 @@
+[package]
+name = "aoc24-day20"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.94"
+aoc_utils = { version = "0.1.0", path = "../aoc_utils" }
+rustc-hash = "2.1.0"
