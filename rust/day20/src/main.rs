@@ -1,35 +1,16 @@
 use anyhow::Context;
-use aoc_utils::{AStarOptions, FxHashMap as HashMap, FxHashSet as HashSet, IVec2, Map2D};
+use aoc_utils::{AStarOptions, FxHashMap as HashMap, IVec2, Map2D};
 
 fn manhattan(a: IVec2, b: IVec2) -> usize {
     ((a.x - b.x).abs() + (a.y - b.y).abs()) as usize
 }
 
-fn shortest_dist(path: &[IVec2], mut from: usize, mut to: usize) -> (usize, usize) {
-    loop {
-        let from_v = path[from];
-        let to_v = path[to];
-
-        let now = manhattan(from_v, to_v);
-
-        if now > manhattan(from_v, path[(to + 1).clamp(0, path.len() - 1)]) {
-            to += 1;
-        } else if now > manhattan(from_v, path[to.saturating_sub(1).clamp(0, path.len() - 1)]) {
-            to -= 1;
-        } else if now > manhattan(path[(from + 1).clamp(0, path.len() - 1)], to_v) {
-            from += 1;
-        } else if now > manhattan(path[from.saturating_sub(1).clamp(0, path.len() - 1)], to_v) {
-            from -= 1;
-        } else {
-            break;
-        }
-    }
-
-    (from, to)
+fn improvement(path: &[IVec2], i: usize, j: usize) -> usize {
+    i.abs_diff(j) - manhattan(path[i], path[j])
 }
 
 fn find_shortcuts(path: &[IVec2], max_cheat_steps: usize) -> HashMap<usize, usize> {
-    let mut cheats = HashSet::<(usize, usize)>::default();
+    let mut cheats = HashMap::<usize, usize>::default();
 
     for (i, pos) in path.iter().copied().enumerate() {
         for (j, next) in path.iter().copied().enumerate().skip(i + 1) {
@@ -39,25 +20,15 @@ fn find_shortcuts(path: &[IVec2], max_cheat_steps: usize) -> HashMap<usize, usiz
                 continue;
             }
 
-            let improvement = (j - i) - dist;
+            let improvement = improvement(path, i, j);
 
             if improvement > 0 {
-                cheats.insert(shortest_dist(path, i, j));
+                *cheats.entry(improvement).or_default() += 1;
             }
         }
     }
 
     cheats
-        .into_iter()
-        .fold(HashMap::default(), |mut result, (i, j)| {
-            let improvement = (j - i) - manhattan(path[i], path[j]);
-
-            if improvement > 0 {
-                *result.entry(improvement).or_default() += 1;
-            }
-
-            result
-        })
 }
 
 #[cfg(test)]
@@ -110,7 +81,7 @@ fn p1_example_works() {
         .context("no base solution found")
         .unwrap();
 
-    let shortcut_counts = find_shortcuts(&fastest, 3);
+    let shortcut_counts = find_shortcuts(&fastest, 2);
 
     for (by, expected) in [
         (2, 14),
@@ -146,9 +117,22 @@ fn p2_example_works() {
 
     let shortcut_counts = find_shortcuts(&fastest, 21);
 
-    println!("{:?}", shortcut_counts);
-
-    for (by, expected) in [(50, 32)] {
+    for (by, expected) in [
+        (50, 32),
+        (52, 31),
+        (54, 29),
+        (56, 39),
+        (58, 25),
+        (60, 23),
+        (62, 20),
+        (64, 19),
+        (66, 12),
+        (68, 14),
+        (70, 12),
+        (72, 22),
+        (74, 4),
+        (76, 3),
+    ] {
         assert_eq!(
             shortcut_counts.get(&by).copied().unwrap_or_default(),
             expected,
@@ -185,7 +169,7 @@ fn main() -> anyhow::Result<()> {
     println!("fastest path: {}", fastest.len() - 1);
     println!(
         "shortcuts of 100 steps through 2 walls: {}",
-        find_shortcuts(&fastest, 3)
+        find_shortcuts(&fastest, 2)
             .into_iter()
             .filter_map(|(improvement, count)| if improvement >= 100 {
                 Some(count)
@@ -197,7 +181,7 @@ fn main() -> anyhow::Result<()> {
 
     println!(
         "shortcuts of 100 steps through 20 walls: {}",
-        find_shortcuts(&fastest, 21)
+        find_shortcuts(&fastest, 20)
             .into_iter()
             .filter_map(|(improvement, count)| if improvement >= 100 {
                 Some(count)
