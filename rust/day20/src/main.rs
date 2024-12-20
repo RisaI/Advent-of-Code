@@ -1,60 +1,67 @@
 use anyhow::Context;
-use aoc_utils::{AStarOptions, FxHashSet, IVec2, Map2D};
+use aoc_utils::{AStarOptions, FxHashMap as HashMap, FxHashSet as HashSet, IVec2, Map2D};
 
 fn manhattan(a: IVec2, b: IVec2) -> usize {
     ((a.x - b.x).abs() + (a.y - b.y).abs()) as usize
 }
 
-fn find_shortcuts(path: &[IVec2], by: usize, max_cheat_steps: usize, _map: &Map2D<bool>) -> usize {
-    let mut cheats = FxHashSet::default();
+fn shortest_dist(path: &[IVec2], mut from: usize, mut to: usize) -> (usize, usize) {
+    loop {
+        let from_v = path[from];
+        let to_v = path[to];
+
+        let now = manhattan(from_v, to_v);
+
+        if now > manhattan(from_v, path[(to + 1).clamp(0, path.len() - 1)]) {
+            to += 1;
+        } else if now > manhattan(from_v, path[to.saturating_sub(1).clamp(0, path.len() - 1)]) {
+            to -= 1;
+        } else if now > manhattan(path[(from + 1).clamp(0, path.len() - 1)], to_v) {
+            from += 1;
+        } else if now > manhattan(path[from.saturating_sub(1).clamp(0, path.len() - 1)], to_v) {
+            from -= 1;
+        } else {
+            break;
+        }
+    }
+
+    (from, to)
+}
+
+fn find_shortcuts(path: &[IVec2], max_cheat_steps: usize) -> HashMap<usize, usize> {
+    let mut cheats = HashSet::<(usize, usize)>::default();
 
     for (i, pos) in path.iter().copied().enumerate() {
-        for steps in 2..=max_cheat_steps {
-            let next_idx = i + by + steps;
+        for (j, next) in path.iter().copied().enumerate().skip(i + 1) {
+            let dist = manhattan(pos, next);
 
-            if let Some(&next) = path.get(next_idx) {
-                if cheats.contains(&next) {
-                    break;
-                }
+            if dist > max_cheat_steps {
+                continue;
+            }
 
-                if manhattan(next, pos) == steps {
-                    for y in 0.._map.height() {
-                        for x in 0.._map.width() {
-                            let dp = IVec2::new(x as i32, y as i32);
+            let improvement = (j - i) - dist;
 
-                            print!(
-                                "{}",
-                                if next == dp {
-                                    '1'
-                                } else if pos == dp {
-                                    '2'
-                                } else if path.contains(&dp) {
-                                    'O'
-                                } else if matches!(_map.get(dp), Some(true)) {
-                                    '#'
-                                } else {
-                                    '.'
-                                }
-                            );
-                        }
-                        println!();
-                    }
-
-                    println!();
-                    cheats.insert(next);
-                    break;
-                }
+            if improvement > 0 {
+                cheats.insert(shortest_dist(path, i, j));
             }
         }
     }
 
-    println!();
+    cheats
+        .into_iter()
+        .fold(HashMap::default(), |mut result, (i, j)| {
+            let improvement = (j - i) - manhattan(path[i], path[j]);
 
-    cheats.len()
+            if improvement > 0 {
+                *result.entry(improvement).or_default() += 1;
+            }
+
+            result
+        })
 }
 
-#[test]
-fn p1_example_works() {
+#[cfg(test)]
+fn load_example() -> (IVec2, IVec2, Map2D<bool>) {
     let mut start = IVec2::ZERO;
     let mut end = IVec2::ZERO;
 
@@ -91,10 +98,19 @@ fn p1_example_works() {
     )
     .unwrap();
 
+    (start, end, map)
+}
+
+#[test]
+fn p1_example_works() {
+    let (start, end, map) = load_example();
+
     let fastest = map
         .a_star(AStarOptions::new(start, end))
         .context("no base solution found")
         .unwrap();
+
+    let shortcut_counts = find_shortcuts(&fastest, 3);
 
     for (by, expected) in [
         (2, 14),
@@ -110,7 +126,31 @@ fn p1_example_works() {
         (64, 1),
     ] {
         assert_eq!(
-            find_shortcuts(&fastest, by, 3, &map),
+            shortcut_counts.get(&by).copied().unwrap_or_default(),
+            expected,
+            "there should be {} shortcuts for {} picoseconds",
+            expected,
+            by
+        )
+    }
+}
+
+#[test]
+fn p2_example_works() {
+    let (start, end, map) = load_example();
+
+    let fastest = map
+        .a_star(AStarOptions::new(start, end))
+        .context("no base solution found")
+        .unwrap();
+
+    let shortcut_counts = find_shortcuts(&fastest, 21);
+
+    println!("{:?}", shortcut_counts);
+
+    for (by, expected) in [(50, 32)] {
+        assert_eq!(
+            shortcut_counts.get(&by).copied().unwrap_or_default(),
             expected,
             "there should be {} shortcuts for {} picoseconds",
             expected,
@@ -144,9 +184,26 @@ fn main() -> anyhow::Result<()> {
 
     println!("fastest path: {}", fastest.len() - 1);
     println!(
-        "shurtcuts of 100 steps through 2 walls: {}",
-        (100..fastest.len())
-            .map(|v| find_shortcuts(&fastest, v, 3, &map))
+        "shortcuts of 100 steps through 2 walls: {}",
+        find_shortcuts(&fastest, 3)
+            .into_iter()
+            .filter_map(|(improvement, count)| if improvement >= 100 {
+                Some(count)
+            } else {
+                None
+            })
+            .sum::<usize>()
+    );
+
+    println!(
+        "shortcuts of 100 steps through 20 walls: {}",
+        find_shortcuts(&fastest, 21)
+            .into_iter()
+            .filter_map(|(improvement, count)| if improvement >= 100 {
+                Some(count)
+            } else {
+                None
+            })
             .sum::<usize>()
     );
 
