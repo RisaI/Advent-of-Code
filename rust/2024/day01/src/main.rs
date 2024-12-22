@@ -1,20 +1,20 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BinaryHeap, HashMap, HashSet},
     fs::File,
     io::{BufRead, BufReader},
 };
 
 use anyhow::bail;
-use aoc_utils::MinHeap;
 
 fn main() -> anyhow::Result<()> {
+    let start = std::time::Instant::now();
     let reader = BufReader::new(File::open("data.txt")?);
 
-    let mut left_list = MinHeap::<usize>::new();
-    let mut right_list = MinHeap::<usize>::new();
+    let mut left_list = BinaryHeap::<usize>::new();
+    let mut right_list = BinaryHeap::<usize>::new();
 
     let mut left_items = HashSet::new();
-    let mut right_occurrences = HashMap::<usize, usize>::new();
+    let mut right_occurrences: HashMap<usize, usize> = HashMap::<usize, usize>::new();
 
     for line in reader.lines() {
         let line = line?;
@@ -47,6 +47,9 @@ fn main() -> anyhow::Result<()> {
         .sum::<usize>();
 
     println!("similarity score {similarity}");
+
+    let elapsed = start.elapsed();
+    println!("took {}us", elapsed.as_micros());
 
     Ok(())
 }

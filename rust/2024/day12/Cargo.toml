@@ -1,9 +1,10 @@
 [package]
-name = "aoc24-day20"
+name = "aoc24-day12"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 anyhow = "1.0.94"
-aoc_utils = { version = "0.1.0", path = "../aoc_utils" }
+aoc_utils = { version = "0.1.0", path = "../../aoc_utils" }
+glam = "0.29.2"
 rustc-hash = "2.1.0"

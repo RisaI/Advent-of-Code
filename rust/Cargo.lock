@@ -250,7 +250,6 @@ name = "aoc24-day01"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "aoc_utils",
 ]
 
 [[package]]

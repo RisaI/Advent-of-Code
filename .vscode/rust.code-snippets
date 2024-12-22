@@ -64,5 +64,17 @@
 			"\t\tOk(state)",
 			"\t})?;",
 		]
+	},
+	"Elapsed time": {
+		"scope": "rust",
+		"prefix": "elapsed_time",
+		"body": [
+			"let start = std::time::Instant::now();",
+			"",
+			"$0",
+			"",
+			"let elapsed = start.elapsed();",
+			"println!(\"took {}us\", elapsed.as_micros());"
+		]
 	}
 }

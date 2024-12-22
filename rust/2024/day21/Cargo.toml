@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.94"
-aoc_utils = { version = "0.1.0", path = "../aoc_utils" }
+aoc_utils = { version = "0.1.0", path = "../../aoc_utils" }
 itertools = "0.13.0"
