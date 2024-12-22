@@ -1,0 +1,8 @@
+[package]
+name = "aoc15-day23"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+winnow = "0.6.20"
