@@ -428,6 +428,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc24-day23"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rustc-hash",
+]
+
+[[package]]
 name = "aoc_utils"
 version = "0.1.0"
 dependencies = [
