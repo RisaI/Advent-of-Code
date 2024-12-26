@@ -1,0 +1,8 @@
+[package]
+name = "aoc16-day01"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+aoc_utils = { version = "0.1.0", path = "../../aoc_utils" }

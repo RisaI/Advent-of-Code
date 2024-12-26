@@ -30,14 +30,14 @@
 		"scope": "rust",
 		"prefix": "read_to_string",
 		"body": [
-			"let data = std::fs::read_to_string(\"data.txt\")?;"
+			"let data = std::fs::read_to_string(\"input.txt\")?;"
 		]
 	},
 	"Read data line by line": {
 		"scope": "rust",
 		"prefix": "read_per_line",
 		"body": [
-			"let reader = BufReader::new(File::open(\"data.txt\")?);",
+			"let reader = BufReader::new(File::open(\"input.txt\")?);",
 			"",
 			"for line in reader.lines() {",
 			"\tlet line = line?;",
@@ -54,7 +54,7 @@
 		"scope": "rust",
 		"prefix": "read_by_folding",
 		"body": [
-			"let data = BufReader::new(File::open(\"data.txt\")?)",
+			"let data = BufReader::new(File::open(\"input.txt\")?)",
 			"\t.lines()",
 			"\t.try_fold($1, |mut state, line| -> anyhow::Result<_> {",
 			"\t\tlet line = line?;",
