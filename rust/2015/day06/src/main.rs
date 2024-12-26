@@ -84,7 +84,7 @@ fn parse_line(mut input: &str) -> anyhow::Result<(Op, Point, Point)> {
 fn main() -> anyhow::Result<()> {
     let mut field = vec![false; ROWS * COLS];
     let mut field_alt = vec![0usize; ROWS * COLS];
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     for line in reader.lines() {
         let line = line?;

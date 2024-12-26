@@ -7,7 +7,7 @@ type Vec2 = glam::IVec2;
 fn main() -> anyhow::Result<()> {
     let start = std::time::Instant::now();
 
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
     let data = data.trim();
 
     let rows = data.split('\n').count() as Prec;

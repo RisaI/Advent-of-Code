@@ -193,7 +193,7 @@ fn solution_to_string(solution: &[u8]) -> String {
 }
 
 fn main() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
     let (puter, program) = data
         .split_once("\n\n")
         .context("input is in a wrong format")?;

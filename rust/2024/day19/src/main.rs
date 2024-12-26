@@ -35,7 +35,7 @@ fn possible_combinations(
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut reader = BufReader::new(File::open("data.txt")?).lines();
+    let mut reader = BufReader::new(File::open("input.txt")?).lines();
 
     let towels = reader
         .by_ref()

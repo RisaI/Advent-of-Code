@@ -42,7 +42,7 @@ fn order_pages(pages: &mut [usize], rules: &HashMap<usize, HashSet<usize>>) {
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut lines = BufReader::new(File::open("data.txt")?).lines();
+    let mut lines = BufReader::new(File::open("input.txt")?).lines();
 
     let mut rules = HashMap::<usize, HashSet<usize>>::new();
 

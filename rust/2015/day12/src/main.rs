@@ -20,7 +20,7 @@ fn pair_bracket(data: &str) -> &str {
 }
 
 fn main() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
 
     {
         let mut data = &data[..];

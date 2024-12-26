@@ -31,7 +31,7 @@ fn p1_example_works() {
 }
 
 fn main() -> anyhow::Result<()> {
-    let data = BufReader::new(File::open("data.txt")?).lines().try_fold(
+    let data = BufReader::new(File::open("input.txt")?).lines().try_fold(
         vec![],
         |mut state, line| -> anyhow::Result<_> {
             let line = line?;

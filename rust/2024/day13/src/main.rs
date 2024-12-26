@@ -71,7 +71,7 @@ Prize: X=8400, Y=5400",
 }
 
 fn main() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
 
     let (p1, p2) = data.split("\n\n").fold((0, 0), |(p1, p2), block| {
         let mut parser = block_parser();

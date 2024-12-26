@@ -38,7 +38,7 @@ fn line_parser<'a>() -> impl Parser<&'a str, (String, String, isize), InputError
 }
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let mut names = HashSet::<String>::default();
     let mut relationships = HashMap::<(String, String), isize>::default();

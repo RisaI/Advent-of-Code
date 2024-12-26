@@ -147,7 +147,7 @@ fn main() -> anyhow::Result<()> {
     let mut start = IVec2::ZERO;
     let mut end = IVec2::ZERO;
 
-    let map = Map2D::read_file("data.txt", |(c, pos)| {
+    let map = Map2D::read_file("input.txt", |(c, pos)| {
         match c {
             '#' => return true,
             'S' => {

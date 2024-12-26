@@ -8,7 +8,7 @@ use anyhow::bail;
 
 fn main() -> anyhow::Result<()> {
     let start = std::time::Instant::now();
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let mut left_list = BinaryHeap::<usize>::new();
     let mut right_list = BinaryHeap::<usize>::new();

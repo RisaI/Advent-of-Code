@@ -7,7 +7,7 @@ use anyhow::{bail, Context};
 use rustc_hash::{FxHashMap, FxHashSet as HashSet};
 
 fn main() -> anyhow::Result<()> {
-    let map = BufReader::new(File::open("data.txt")?).lines().try_fold(
+    let map = BufReader::new(File::open("input.txt")?).lines().try_fold(
         FxHashMap::<String, HashSet<String>>::default(),
         |mut state, line| -> anyhow::Result<_> {
             let line = line?;

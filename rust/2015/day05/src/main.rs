@@ -5,7 +5,7 @@ use std::{
 };
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let mut nice_a = 0;
     let mut nice_b = 0;

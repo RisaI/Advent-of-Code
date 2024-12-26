@@ -69,7 +69,7 @@ fn check_recursive(result: isize, values: &[isize], no_con: bool) -> bool {
 }
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let mut sums = [0, 0];
 

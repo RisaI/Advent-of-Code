@@ -22,7 +22,7 @@ fn parse_line<'a>() -> impl Parser<&'a str, ((String, String), usize), InputErro
 }
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let mut places = HashMap::<String, usize>::default();
     let mut distances = HashMap::<(usize, usize), usize>::default();

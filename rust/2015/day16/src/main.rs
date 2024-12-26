@@ -32,7 +32,7 @@ perfumes: 1",
         )
         .map_err(|e| anyhow::format_err!("{e}"))?;
 
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     for line in reader.lines() {
         let line = line?;

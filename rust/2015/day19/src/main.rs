@@ -37,7 +37,7 @@ fn parse_molecule(input: &str) -> impl Iterator<Item = &str> {
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut reader = BufReader::new(File::open("data.txt")?).lines();
+    let mut reader = BufReader::new(File::open("input.txt")?).lines();
 
     let mut atoms = HashMap::<String, u8>::default();
     let mut replacements = Vec::<(Vec<u8>, Vec<u8>)>::default();

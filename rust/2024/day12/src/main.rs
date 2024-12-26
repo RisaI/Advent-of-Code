@@ -115,7 +115,7 @@ EEEC",
 }
 
 fn main() -> anyhow::Result<()> {
-    let map = Map::read_file("data.txt", |c: char| c as u8 - b'A')?;
+    let map = Map::read_file("input.txt", |c: char| c as u8 - b'A')?;
 
     let start = std::time::Instant::now();
     let (nondiscounted, discounted) = calculate_fence_price(&map);

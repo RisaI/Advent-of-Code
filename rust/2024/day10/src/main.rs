@@ -82,13 +82,13 @@ fn example_werks() {
 
 #[test]
 fn finds_correct_peaks() {
-    let data = Map::read_file("data.txt", parse_char).unwrap();
+    let data = Map::read_file("input.txt", parse_char).unwrap();
 
     assert_eq!(find_trail_score(&data, Vec2::new(46, 32), true), 3);
 }
 
 fn main() -> Result<()> {
-    let map = Map::read_file("data.txt", parse_char)?;
+    let map = Map::read_file("input.txt", parse_char)?;
 
     let (p1, p2) = map.find(find_trailheads).fold((0, 0), |(p1, p2), (p, _)| {
         (

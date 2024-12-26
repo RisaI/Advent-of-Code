@@ -26,7 +26,7 @@ fn least_entanglement(packages: &[usize], target: usize) -> Option<usize> {
 
 fn main() -> anyhow::Result<()> {
     let packages = {
-        let mut data = BufReader::new(File::open("data.txt")?).lines().try_fold(
+        let mut data = BufReader::new(File::open("input.txt")?).lines().try_fold(
             vec![],
             |mut state, line| -> anyhow::Result<_> {
                 let line = line?;

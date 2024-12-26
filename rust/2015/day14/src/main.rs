@@ -56,7 +56,7 @@ impl FromStr for Reindeer {
 const TARGET_TIME: usize = 2503;
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let mut reindeers = vec![];
 

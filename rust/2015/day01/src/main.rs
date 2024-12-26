@@ -1,5 +1,5 @@
 fn main() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
 
     let floor = data.chars().map(|ch| match ch {
         '(' => 1,

@@ -129,7 +129,7 @@ fn main() -> anyhow::Result<()> {
     let mut start_pos = IVec2::default();
     let mut end_pos = IVec2::default();
 
-    let map = Map2D::read_file("data.txt", |(c, pos): (char, IVec2)| {
+    let map = Map2D::read_file("input.txt", |(c, pos): (char, IVec2)| {
         match c {
             'S' => start_pos = pos,
             'E' => end_pos = pos,

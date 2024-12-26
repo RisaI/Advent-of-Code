@@ -14,7 +14,7 @@ struct Options {
 
 fn main() -> anyhow::Result<()> {
     let opts = Options::parse();
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let mut valid = 0;
 

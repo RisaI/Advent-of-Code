@@ -22,7 +22,7 @@ fn animate(map: &mut Map2D<bool>, buffer: &mut Map2D<bool>) {
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut map = Map2D::read_file("data.txt", |l: char| l == '#')?;
+    let mut map = Map2D::read_file("input.txt", |l: char| l == '#')?;
     let mut buffer = map.clone();
 
     // P1

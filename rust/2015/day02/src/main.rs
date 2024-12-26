@@ -6,7 +6,7 @@ use std::{
 use anyhow::bail;
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let mut area = 0;
     let mut ribbon = 0;

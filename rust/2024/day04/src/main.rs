@@ -9,7 +9,7 @@ static P1_TARGETS: &[&[u8]] = &[b"XMAS", b"SAMX"];
 static P2_TARGETS: &[&[u8]] = &[b"MAS", b"SAM"];
 
 fn main() -> anyhow::Result<()> {
-    let data = BufReader::new(File::open("data.txt")?)
+    let data = BufReader::new(File::open("input.txt")?)
         .lines()
         .map(|v| v.map(|v| v.into_bytes()))
         .collect::<Result<Vec<_>, _>>()?;

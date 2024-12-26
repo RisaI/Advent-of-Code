@@ -99,7 +99,7 @@ fn resolve_wiring(wiring: &HashMap<Wire, Operation<Wire>>) -> HashMap<&Wire, Sig
 }
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let start = std::time::Instant::now();
     let mut wiring = HashMap::<Wire, Operation<Wire>>::default();

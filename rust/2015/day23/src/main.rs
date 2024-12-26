@@ -120,7 +120,7 @@ impl FromStr for Instruction {
 }
 
 fn main() -> anyhow::Result<()> {
-    let program = BufReader::new(File::open("data.txt")?).lines().try_fold(
+    let program = BufReader::new(File::open("input.txt")?).lines().try_fold(
         vec![],
         |mut state, line| -> anyhow::Result<_> {
             let line = line?;

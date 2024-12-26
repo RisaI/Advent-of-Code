@@ -22,7 +22,7 @@ fn looks_and_says() {
 }
 
 fn main() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
 
     let data = data
         .as_bytes()

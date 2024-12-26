@@ -41,7 +41,7 @@ impl FromStr for Ingredient {
 }
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let ingredients = reader.lines().try_fold(
         vec![],

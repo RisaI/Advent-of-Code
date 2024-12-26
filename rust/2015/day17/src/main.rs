@@ -13,7 +13,7 @@ fn partitions(value: usize, containers: &[usize], budget: usize) -> usize {
 }
 
 fn main() -> anyhow::Result<()> {
-    let containers = std::fs::read_to_string("data.txt")?
+    let containers = std::fs::read_to_string("input.txt")?
         .split('\n')
         .filter(|v| !v.is_empty())
         .map(|v| v.parse::<usize>())

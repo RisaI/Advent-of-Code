@@ -37,7 +37,7 @@ fn parse_instruction<'a>() -> impl Parser<&'a str, Instruction, ContextError> {
 
 fn main() -> anyhow::Result<()> {
     let opts = Options::parse();
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
 
     let mut window = data.as_str();
     let mut sum = 0;

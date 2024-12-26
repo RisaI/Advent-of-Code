@@ -205,7 +205,7 @@ fn p1_example() {
 }
 
 fn main() -> anyhow::Result<()> {
-    let (total_complexity_p1, total_complexity_p2) = BufReader::new(File::open("data.txt")?)
+    let (total_complexity_p1, total_complexity_p2) = BufReader::new(File::open("input.txt")?)
         .lines()
         .try_fold((0, 0), |(p1, p2), line| -> anyhow::Result<_> {
             let line = line?;

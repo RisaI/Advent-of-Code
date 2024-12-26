@@ -153,7 +153,7 @@ fn checksum_just_werks() {
 
     assert_eq!(checksum(&fs), 2858);
 
-    let data = std::fs::read_to_string("data.txt").unwrap();
+    let data = std::fs::read_to_string("input.txt").unwrap();
     let mut fs = parse_fs(&data);
 
     compact(&mut fs);
@@ -162,7 +162,7 @@ fn checksum_just_werks() {
 }
 
 fn main() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
 
     let start = std::time::Instant::now();
 

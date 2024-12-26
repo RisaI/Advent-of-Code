@@ -31,7 +31,7 @@ fn next_password(pass: &mut [u8]) -> &[u8] {
 }
 
 fn main() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data.txt")?;
+    let data = std::fs::read_to_string("input.txt")?;
     let mut bytes: Box<[u8]> = data.trim().as_bytes().into();
 
     println!(

@@ -92,7 +92,7 @@ impl FromStr for Robot {
 }
 
 fn main() -> anyhow::Result<()> {
-    let reader = BufReader::new(File::open("data.txt")?);
+    let reader = BufReader::new(File::open("input.txt")?);
 
     let map = Arena::new(IVec2::new(101, 103));
 

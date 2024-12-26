@@ -6,7 +6,7 @@ type Coord = i32;
 type Vec2 = glam::IVec2;
 
 fn main() -> anyhow::Result<()> {
-    let map = std::fs::read_to_string("data.txt")?;
+    let map = std::fs::read_to_string("input.txt")?;
 
     anyhow::ensure!(map.is_ascii(), "the map should be ASCII");
 

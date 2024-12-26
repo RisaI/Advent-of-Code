@@ -1,7 +1,7 @@
 use anyhow::Context;
 
 fn main() -> anyhow::Result<()> {
-    let data = std::fs::read_to_string("data.txt")?
+    let data = std::fs::read_to_string("input.txt")?
         .trim()
         .parse::<usize>()?;
 
