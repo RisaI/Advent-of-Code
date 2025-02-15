@@ -1,3 +1,3 @@
-# Christmas is coming...
+# Advent of Code Solutions
 
-Too late to do casual online shopping now.
+This repository contains my solutions for AoC problems. I currently only solve them in Rust.
