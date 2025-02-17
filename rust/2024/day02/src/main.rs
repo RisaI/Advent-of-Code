@@ -28,21 +28,17 @@ fn main() -> anyhow::Result<()> {
         let mut dir = 0;
         let mut dampener = !opts.disable_dampener;
 
-        if levels
-            .windows(2)
-            .map(|vals| {
-                let dist = vals[1] - vals[0];
+        if levels.windows(2).all(|vals| {
+            let dist = vals[1] - vals[0];
 
-                if dir == 0 {
-                    dir = dist.signum();
-                }
+            if dir == 0 {
+                dir = dist.signum();
+            }
 
-                let valid = dist.signum() == dir && dist.abs() <= 3 && dist.abs() > 0;
+            let valid = dist.signum() == dir && dist.abs() <= 3 && dist.abs() > 0;
 
-                valid || std::mem::replace(&mut dampener, false)
-            })
-            .all(|v| v)
-        {
+            valid || std::mem::replace(&mut dampener, false)
+        }) {
             valid += 1;
         }
     }
